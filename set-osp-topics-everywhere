@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+from dciclient.v1.api import context as dci_context
+from dciclient.v1.api import topic as dci_topic
+from dciclient.v1.api import team as dci_team
+
+
+context = dci_context.build_dci_context()
+
+def set_topics(team_id):
+    topics_to_enable = ['OSP12', 'OSP13']
+    for topic_name in topics_to_enable:
+        r = dci_topic.list(context, where='name:' + topic_name)
+        topic = r.json()['topics'][0]
+        r = dci_topic.attach_team(context, topic['id'], team_id)
+        print(r.text)
+
+def go_down(parent_id):
+    r = dci_team.list(context)
+    for team in r.json()['teams']:
+        if team['parent_id'] == parent_id:
+            go_down(team['id'])
+            print(team['name'])
+            set_topics(team['id'])
+
+
+r = dci_team.list(context, where='name:OpenStack')
+go_down(r.json()['teams'][0]['id'])
